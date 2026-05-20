@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Grid, GridItem } from '@consta/uikit/Grid';
 import { Layout } from '@consta/uikit/Layout';
-import { Pagination } from '@consta/uikit/Pagination';
 import { Text } from '@consta/uikit/Text';
+import { Button } from '@consta/uikit/Button';
+import { IconArrowRedone } from '@consta/icons/IconArrowRedone';
+
+import { CustomPagination } from './CustomPagination';
 
 import { generatePostListsData } from 'shared';
 
@@ -25,6 +28,13 @@ export const PostsList = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [usingMockData, setUsingMockData] = useState(false);
 
+  const postsService = useRef(new PostsService()).current;
+
+  const [isScraping, setIsScraping] = useState(false);
+  const [scrapeStatus, setScrapeStatus] = useState<'idle' | 'up-to-date' | 'updated' | 'cached'>('idle');
+  const [newPostsCount, setNewPostsCount] = useState(0);
+  const [nextAllowedIn, setNextAllowedIn] = useState(0);
+
   useEffect(() => {
     const fetchPosts = async () => {
       setIsDataLoading(true);
@@ -35,7 +45,6 @@ export const PostsList = () => {
 
       // Try to get posts data from real API
       try {
-        const postsService = new PostsService();
         const { data, totalPages } = await postsService.getPosts(page);
 
         setListData(data);
@@ -84,18 +93,68 @@ export const PostsList = () => {
       });
   }, [page]);
 
+  const handleScrape = async () => {
+    setIsScraping(true);
+    setScrapeStatus('idle');
+    try {
+      const { newPosts, cached, nextAllowedIn: next } = await postsService.triggerScrape();
+
+      if (cached) {
+        setScrapeStatus('cached');
+        setNextAllowedIn(next);
+      } else {
+        setNewPostsCount(newPosts);
+        setScrapeStatus(newPosts > 0 ? 'updated' : 'up-to-date');
+        if (newPosts > 0) setPage(1);
+      }
+    } catch {
+      setScrapeStatus('idle');
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
   const hasContent = !isDataLoading && !error && listData && listData.length;
+
+  const scrapeButton = (
+    <Layout className={styles.list__scrape}>
+      <Button
+        label={isScraping ? 'Парсинг...' : 'Обновить'}
+        iconLeft={IconArrowRedone}
+        size="s"
+        view="secondary"
+        loading={isScraping}
+        disabled={isScraping}
+        onClick={handleScrape}
+      />
+      {scrapeStatus === 'up-to-date' && (
+        <Text size="xs" view="secondary">Все данные актуальны</Text>
+      )}
+      {scrapeStatus === 'updated' && (
+        <Text size="xs" view="success">Добавлено {newPostsCount} новых постов</Text>
+      )}
+      {scrapeStatus === 'cached' && (
+        <Text size="xs" view="secondary">
+          Данные актуальны, повтор через {Math.ceil(nextAllowedIn / 60)} мин
+        </Text>
+      )}
+    </Layout>
+  );
 
   return (
     <Layout className={styles.wrapper}>
       {isDataLoading && <CustomLoader />}
-      {error && <CustomError errorType={error} message={errorMessage} hasReturnButton={false} />}
+      {error && <CustomError errorType={error} message={errorMessage} hasReturnButton={false} customButton={scrapeButton} />}
 
       {hasContent && (
         <Layout direction="column" className={styles.list}>
-          <Text view="brand" size="3xl" weight="bold" lineHeight="xs" className={styles.list__title}>
-            Список актуальных новостей
-          </Text>
+          <Layout className={styles.list__header}>
+            <Text view="brand" size="3xl" weight="bold" lineHeight="xs" className={styles.list__title}>
+              Список актуальных новостей
+            </Text>
+
+            {scrapeButton}
+          </Layout>
 
           {usingMockData && (
             <Text view="warning" size="m">
@@ -128,15 +187,10 @@ export const PostsList = () => {
             })}
           </Grid>
 
-          <Pagination
-            className={styles.pagination}
-            value={page}
+          <CustomPagination
+            page={page}
+            totalPages={totalPages}
             onChange={setPage}
-            items={totalPages}
-            size="l"
-            visibleCount={5}
-            showFirstPage
-            showLastPage
           />
         </Layout>
       )}

@@ -1,0 +1,40 @@
+{
+  "name": "devweek-2025-parser",
+  "version": "1.0.0",
+  "description": "Parser backend for real estate news — fontanka, rbc, pn.ru",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "prod": "npm run build && pm2 start ecosystem.config.js",
+    "prod:stop": "pm2 stop devweek-backend",
+    "prod:logs": "pm2 logs devweek-backend",
+    "prod:status": "pm2 status",
+    "benchmark": "ts-node benchmark.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/uuid": "^9.0.8",
+    "prisma": "^5.22.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}

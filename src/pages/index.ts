@@ -1,4 +1,5 @@
 export * from './generate-post-page';
+export * from './generate-story-page';
 export * from './header-page';
 export * from './page-404';
 export * from './posts-page';

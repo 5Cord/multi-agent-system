@@ -43,7 +43,7 @@ export const CustomError = ({ errorType, message, hasReturnButton = true, custom
       )}
 
       {errorType === 'empty-data' && (
-        <ResponsesEmptyBox description={message || EMPTY_DATA_ERROR_MESSAGE} actions={returnButton} />
+        <ResponsesEmptyBox description={message || EMPTY_DATA_ERROR_MESSAGE} actions={customButton || returnButton} />
       )}
 
       {errorType === 'not-found' && <Responses404 actions={returnButton} />}

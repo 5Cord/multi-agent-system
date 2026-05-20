@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import classNames from 'classnames';
 
 import { Button } from '@consta/uikit/Button';
+import { Checkbox } from '@consta/uikit/Checkbox';
 import { Layout } from '@consta/uikit/Layout';
 import { Text } from '@consta/uikit/Text';
 import { TextField } from '@consta/uikit/TextField';
@@ -13,14 +14,12 @@ import { IconDownload } from '@consta/icons/IconDownload';
 import { IconPicture } from '@consta/icons/IconPicture';
 import { IconRevert } from '@consta/icons/IconRevert';
 
-import { OpenRouterTextService } from 'services/OpenRouterService';
-import { FusionBrainService } from 'services/FusionBrainService';
-import { StableCogService } from 'services/StableCogService';
+import { BackendGenerationService } from 'services/GigaChatService';
 
 import { CustomError } from 'features';
 import { getPromptFromArticle } from 'shared';
 import { ErrorType, IStyleItem } from 'shared';
-import { IMAGE_STYLES } from 'shared';
+import { IMAGE_STYLES, IPlatformItem, PLATFORM_ITEMS } from 'shared';
 
 import { MIN_PROMPT_LENGTH } from '../model/constants';
 import { getImageByStyleId, checkIsValidPrompt } from '../model/helpers';
@@ -35,6 +34,10 @@ export const GeneratePostPage = () => {
   const [imageNegativePrompt, seImagetNegativePrompt] = useState<string | null>(null);
   const [imagePrompt, setImagePrompt] = useState<string | null>(null);
   const [textPrompt, setTextPrompt] = useState<string | null>(null);
+
+  const [platform, setPlatform] = useState<IPlatformItem>(PLATFORM_ITEMS[0]);
+  const [useEmojis, setUseEmojis] = useState(true);
+  const [useHashtags, setUseHashtags] = useState(true);
 
   const [isImagePromptAlert, setIsImagePromptAlert] = useState(false);
   const [isTextPromptAlert, setIsTextPromptAlert] = useState(false);
@@ -78,16 +81,31 @@ export const GeneratePostPage = () => {
     setTextPrompt(value);
   };
 
+  const buildFinalTextPrompt = (rawPrompt: string): string => {
+    return [
+      rawPrompt,
+      platform.promptInstruction,
+      useEmojis
+        ? 'Обязательно используй смайлики и эмодзи.'
+        : 'Не используй смайлики и эмодзи.',
+      useHashtags
+        ? 'В конце обязательно добавь подходящие хэштеги.'
+        : 'Не добавляй хэштеги.',
+    ].join(' ');
+  };
+
   const handleTextGeneration = async () => {
     if (textPrompt && textPrompt.length >= MIN_PROMPT_LENGTH) {
       setGeneratedText('');
+      setError(null);
       setIsTextLoading(true);
       setIsTextPromptAlert(false);
 
       try {
-        const result = await generateTextWithFallback(textPrompt);
-        setGeneratedText(result);
-      } catch {
+        const result = await generateTextWithFallback(buildFinalTextPrompt(textPrompt));
+        if (result) setGeneratedText(result);
+      } catch (err) {
+        console.error('[Text] Ошибка генерации:', err);
         setError('generation-error');
       } finally {
         setIsTextLoading(false);
@@ -107,7 +125,8 @@ export const GeneratePostPage = () => {
 
     try {
       await generateImageWithFallback();
-    } catch {
+    } catch (err) {
+      console.error('[Image] Ошибка генерации:', err);
       setError('generation-error');
     } finally {
       setIsImageLoading(false);
@@ -118,91 +137,65 @@ export const GeneratePostPage = () => {
     setGeneratedImageUrl('');
     setIsImageLoading(true);
     setIsImagePromptAlert(false);
+    setError(null);
   };
 
-  // Functions to generate images with different Services
-
-  const generateWithFusionBrain = async () => {
-    const fusionBrainService = new FusionBrainService(
-      import.meta.env.VITE_FUSIONBRAIN_API_KEY,
-      import.meta.env.VITE_FUSIONBRAIN_SECRET_KEY
-    );
-
-    const { imageBase64 } = await fusionBrainService.generateImageByPrompt(
-      imagePrompt!,
-      imageNegativePrompt,
-      imageStyle?.id
-    );
-
-    setGeneratedImageUrl(`data:image/png;base64,${imageBase64}`);
-  };
-
-  const generateWithStableCog = async () => {
-    const stableCogService = new StableCogService(import.meta.env.VITE_STABLECOG_SECRET_KEY);
-
-    const { imageBase64 } = await stableCogService.generateImageByPrompt(
-      imagePrompt!,
-      imageNegativePrompt,
-      imageStyle?.id
-    );
-
-    setGeneratedImageUrl(imageBase64);
-  };
-
-  // Functions to generate text with different API keys
-
-  const generateTextWithMainKey = async (prompt: string) => {
-    const openRouterTextService = new OpenRouterTextService(
-      import.meta.env.VITE_OPENROUTER_AUTH_KEY_MAIN,
-      window.location.href,
-      'devweek-2025-new'
-    );
-
-    return await openRouterTextService.generateTextFromPrompt(prompt);
-  };
-
-  const generateTextWithFallbackKey = async (prompt: string) => {
-    const openRouterTextService = new OpenRouterTextService(
-      import.meta.env.VITE_OPENROUTER_AUTH_KEY_FALLBACK,
-      window.location.href,
-      'devweek-2025'
-    );
-
-    return await openRouterTextService.generateTextFromPrompt(prompt);
-  };
-
-  // Functions to call content generation functions with Fallback
+  const backendService = useRef(new BackendGenerationService()).current;
 
   const generateImageWithFallback = async () => {
-    try {
-      await generateWithFusionBrain();
-    } catch {
-      await generateWithStableCog();
-    }
+    const imageBase64 = await backendService.generateImage(imagePrompt!, imageNegativePrompt, imageStyle?.id);
+    if (imageBase64) setGeneratedImageUrl(imageBase64);
   };
 
-  const generateTextWithFallback = async (prompt: string) => {
-    try {
-      return await generateTextWithMainKey(prompt);
-    } catch (error) {
-      console.error('Error with main key:', error);
-
-      try {
-        return await generateTextWithFallbackKey(prompt);
-      } catch (error) {
-        console.error('Error with fallback key:', error);
-        throw new Error('Both keys failed');
-      }
-    }
+  const generateTextWithFallback = async (prompt: string): Promise<string | null> => {
+    return backendService.generateText(prompt);
   };
 
-  // Function to download image
   const handleDownload = (base64Image: string) => {
-    const link = document.createElement('a');
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    link.href = base64Image;
-    link.download = 'generated.png';
-    link.click();
+      ctx.drawImage(img, 0, 0);
+
+      const fontSize = Math.max(14, Math.round(img.width / 38));
+      ctx.font = `${fontSize}px sans-serif`;
+      ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 4;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Контент сгенерирован с помощью ИИ', img.width - 14, img.height - 12);
+
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'generated.png';
+      link.click();
+    };
+    img.src = base64Image;
+  };
+
+  const [rating, setRating] = useState<number | null>(null);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [isRatingSubmitted, setIsRatingSubmitted] = useState(false);
+
+  const handleRatingSubmit = async (star: number) => {
+    setRating(star);
+    setIsRatingSubmitted(true);
+    try {
+      await backendService.submitFeedback({
+        rating: star,
+        textPrompt: textPrompt ?? '',
+        imagePrompt: imagePrompt ?? '',
+        generatedText
+      });
+    } catch (err) {
+      console.error('[Feedback] Ошибка отправки оценки:', err);
+    }
   };
 
   const isContentGenerated = generatedText && generatedImageUrl;
@@ -215,6 +208,7 @@ export const GeneratePostPage = () => {
       className={classNames(styles.button, styles.button_wide)}
       label="Перегенерировать пост"
       iconLeft={IconRevert}
+      disabled={isTextLoading || isImageLoading}
       onClick={() => {
         handleTextGeneration();
         handleImageGeneration();
@@ -249,6 +243,29 @@ export const GeneratePostPage = () => {
                 onChange={handleImageNegativePromptChange}
                 className={styles.input}
               />
+
+              <Select<IPlatformItem>
+                label="Площадка публикации"
+                items={PLATFORM_ITEMS}
+                value={platform}
+                onChange={(value) => value && setPlatform(value)}
+                getItemLabel={(item) => item.label}
+                getItemKey={(item) => item.id}
+                className={styles.input}
+              />
+
+              <Layout className={styles.imageSettings__checkboxes}>
+                <Checkbox
+                  label="Использовать эмодзи"
+                  checked={useEmojis}
+                  onChange={() => setUseEmojis((v) => !v)}
+                />
+                <Checkbox
+                  label="Использовать хэштеги"
+                  checked={useHashtags}
+                  onChange={() => setUseHashtags((v) => !v)}
+                />
+              </Layout>
             </Layout>
 
             <Layout direction="column" className={styles.imageSettings__preview}>
@@ -292,6 +309,7 @@ export const GeneratePostPage = () => {
             className={classNames(styles.button, styles.button_centered)}
             label="Сгенерировать пост"
             iconLeft={IconPicture}
+            disabled={isTextLoading || isImageLoading}
             onClick={() => {
               handleTextGeneration();
               handleImageGeneration();
@@ -311,38 +329,78 @@ export const GeneratePostPage = () => {
               {showGenerationContent && (
                 <>
                   {generatedImageUrl && (
-                    <img
-                      className={styles.generation__image}
-                      src={generatedImageUrl}
-                      alt="Сгенерированная иллюстрация для поста"
-                    />
+                    <div className={styles.generation__imageWrapper}>
+                      <img
+                        className={styles.generation__image}
+                        src={generatedImageUrl}
+                        alt="Сгенерированная иллюстрация для поста"
+                      />
+                      <span className={styles.generation__watermark}>
+                        Контент сгенерирован с помощью ИИ
+                      </span>
+                    </div>
                   )}
                   {isImageLoading && !generatedImageUrl && (
-                    <SkeletonBrick className={styles.generation__image} height={500} width={500} />
+                    <div className={styles.generation__imageWrapper}>
+                      <SkeletonBrick height="100%" width="100%" />
+                    </div>
                   )}
 
                   <Layout direction="column" className={styles.generation__side}>
                     {isContentGenerated && (
-                      <Layout className={styles.generation__buttons}>
-                        <Button
-                          className={classNames(styles.button, styles.button_wide)}
-                          label="Перегенерировать пост"
-                          iconLeft={IconRevert}
-                          onClick={() => {
-                            handleTextGeneration();
-                            handleImageGeneration();
-                          }}
-                        />
+                      <>
+                        <Layout className={styles.generation__buttons}>
+                          <Button
+                            className={classNames(styles.button, styles.button_wide)}
+                            label="Перегенерировать пост"
+                            iconLeft={IconRevert}
+                            disabled={isTextLoading || isImageLoading}
+                            onClick={() => {
+                              setRating(null);
+                              setIsRatingSubmitted(false);
+                              handleTextGeneration();
+                              handleImageGeneration();
+                            }}
+                          />
 
-                        <Button
-                          className={classNames(styles.button, styles.button_wide)}
-                          label="Скачать картинку"
-                          iconLeft={IconDownload}
-                          onClick={() => {
-                            handleDownload(generatedImageUrl);
-                          }}
-                        />
-                      </Layout>
+                          <Button
+                            className={classNames(styles.button, styles.button_wide)}
+                            label="Скачать картинку"
+                            iconLeft={IconDownload}
+                            onClick={() => {
+                              handleDownload(generatedImageUrl);
+                            }}
+                          />
+                        </Layout>
+
+                        <Layout direction="column" className={styles.rating}>
+                          <Text size="l" weight="semibold">
+                            Оцените качество сгенерированного контента
+                          </Text>
+                          <Layout className={styles.rating__stars}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                className={classNames(styles.rating__star, {
+                                  [styles.rating__star_active]: star <= (hoverRating ?? rating ?? 0)
+                                })}
+                                disabled={isRatingSubmitted}
+                                onClick={() => handleRatingSubmit(star)}
+                                onMouseEnter={() => !isRatingSubmitted && setHoverRating(star)}
+                                onMouseLeave={() => setHoverRating(null)}
+                                aria-label={`Оценить на ${star} из 5`}
+                              >
+                                ★
+                              </button>
+                            ))}
+                          </Layout>
+                          {isRatingSubmitted && rating !== null && (
+                            <Text view="success" size="m">
+                              Спасибо! Оценка {rating}/5 отправлена — это поможет улучшить модели.
+                            </Text>
+                          )}
+                        </Layout>
+                      </>
                     )}
 
                     {generatedText && (

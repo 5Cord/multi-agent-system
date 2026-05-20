@@ -32,3 +32,6 @@ dist-ssr
 
 localhost-key.pem
 localhost.pem
+.claude
+TASKS.md
+PROJECT.md

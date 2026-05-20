@@ -8,8 +8,11 @@ export class PostsService {
   private _fetchOptions: RequestInit;
   private _timeout: number;
 
+  private _apiRootUrl: string;
+
   constructor() {
-    this._apiBaseUrl = 'https://devweek-2025.ru/posts';
+    this._apiRootUrl = import.meta.env.VITE_POSTS_API_URL ?? 'https://devweek-2025.ru';
+    this._apiBaseUrl = this._apiRootUrl + '/posts';
     this._fetchOptions = {
       method: 'GET'
     };
@@ -67,6 +70,35 @@ export class PostsService {
     return transformed;
   };
 
+  triggerScrape = async (): Promise<{ newPosts: number; cached: boolean; nextAllowedIn: number }> => {
+    const response = await fetch(`${this._apiRootUrl}/api/scrape`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Scrape failed: ${response.status}`);
+    }
+
+    const data = await response.json() as {
+      success: boolean;
+      newPosts?: number;
+      cached?: boolean;
+      nextAllowedIn?: number;
+      error?: string;
+    };
+
+    if (!data.success) {
+      throw new Error(data.error ?? 'Неизвестная ошибка парсинга');
+    }
+
+    return {
+      newPosts: data.newPosts ?? 0,
+      cached: data.cached ?? false,
+      nextAllowedIn: data.nextAllowedIn ?? 0,
+    };
+  };
+
   _transformPostsData = (rawPostsData: IRawPostsListItemData[]): IPostListItemData[] => {
     return rawPostsData.map((rawData) => {
       return {
@@ -79,6 +111,13 @@ export class PostsService {
     });
   };
 
+  _extractAuthorText = (raw: string, fallback: string): string => {
+    if (!raw || raw === 'unknown') return fallback;
+    // Strip HTML tags — keep text nodes only, ignore attributes (including alt)
+    const stripped = raw.replace(/<[^>]*>/g, '').trim();
+    return stripped || fallback;
+  };
+
   _transformSinglePostData = (rawSinglePostData: IRawSinglePostData): ISinglePostData => {
     return {
       id: rawSinglePostData.id,
@@ -87,7 +126,7 @@ export class PostsService {
       description: rawSinglePostData.text,
       previewImageUrl: rawSinglePostData.image_link,
       sourceUrl: rawSinglePostData.origin_link,
-      source: rawSinglePostData.author === 'unknown' ? 'Фонтанка.РУ' : rawSinglePostData.author,
+      source: this._extractAuthorText(rawSinglePostData.author, rawSinglePostData.origin_link),
       tag: 'Аналитика' // TODO: Получить с сервера актуальные, сейчас хардкод
     };
   };

@@ -5,8 +5,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { IconBackward } from '@consta/icons/IconBackward';
 import { IconOpenInNew } from '@consta/icons/IconOpenInNew';
+import { IconPhoto } from '@consta/icons/IconPhoto';
 
 import { Button } from '@consta/uikit/Button';
+import { SkeletonText } from '@consta/uikit/Skeleton';
 import { Grid, GridItem } from '@consta/uikit/Grid';
 import { Layout } from '@consta/uikit/Layout';
 import { Tag } from '@consta/uikit/Tag';
@@ -38,6 +40,31 @@ export const SinglePost = ({ postId }: ISinglePost) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [usingMockData, setUsingMockData] = useState(false);
 
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+
+  const generateSummary = async (title: string, description: string) => {
+    if (!description || description.trim().length < 100) return;
+    setIsSummaryLoading(true);
+    setSummary(null);
+    try {
+      const backendUrl = import.meta.env.VITE_POSTS_API_URL ?? 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/api/summarize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, text: description }),
+        signal: AbortSignal.timeout(45_000)
+      });
+      if (!response.ok) throw new Error(`summarize failed: ${response.status}`);
+      const data = await response.json() as { summary: string };
+      setSummary(data.summary);
+    } catch {
+      setSummary(null);
+    } finally {
+      setIsSummaryLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (postId) {
       const fetchPost = async () => {
@@ -54,14 +81,13 @@ export const SinglePost = ({ postId }: ISinglePost) => {
           const postsService = new PostsService();
           const data = await postsService.getPostById(id);
 
-          console.log(data);
-
           setPostData(data);
 
           if (!data) {
             setError('empty-data');
           }
 
+          generateSummary(data.title, data.description);
           return; // successful request, return to main flow
         } catch (error) {
           apiError = error instanceof Error ? error : new Error(String(error));
@@ -73,6 +99,7 @@ export const SinglePost = ({ postId }: ISinglePost) => {
 
           setPostData(mockData);
           setUsingMockData(true);
+          generateSummary(mockData.title, mockData.description);
 
           if (!mockData) {
             setError('empty-data');
@@ -173,6 +200,15 @@ export const SinglePost = ({ postId }: ISinglePost) => {
                   navigate('/posts/generation', { state: { article: postData.description, title: postData.title } });
                 }}
               />
+              <Button
+                className={styles.post__button}
+                label="Сгенерировать историю"
+                iconLeft={IconPhoto}
+                view="ghost"
+                onClick={() => {
+                  navigate('/posts/story', { state: { article: postData.description, title: postData.title } });
+                }}
+              />
             </Layout>
           </GridItem>
 
@@ -181,9 +217,13 @@ export const SinglePost = ({ postId }: ISinglePost) => {
               Краткое содержание новости:
             </Text>
 
-            <Text size="l" className={styles.post__description}>
-              {postData.description}
-            </Text>
+            {isSummaryLoading && <SkeletonText rows={3} fontSize="l" lineHeight="xs" />}
+
+            {!isSummaryLoading && (
+              <Text size="l" className={styles.post__description}>
+                {summary ?? postData.description}
+              </Text>
+            )}
           </GridItem>
         </Grid>
       )}

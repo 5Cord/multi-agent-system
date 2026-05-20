@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { IconEdit } from '@consta/icons/IconEdit';
 import { IconHome } from '@consta/icons/IconHome';
 import { IconWindow } from '@consta/icons/IconWindow';
+import { IconPhoto } from '@consta/icons/IconPhoto';
 
 import { Button } from '@consta/uikit/Button';
 import { Layout } from '@consta/uikit/Layout';
@@ -29,7 +30,11 @@ export const HeaderPage = () => {
           </Link>
 
           <Link to="/posts/generation">
-            <Button label="Генерация" className={styles.header__button} view="secondary" iconLeft={IconEdit} />
+            <Button label="Создание поста" className={styles.header__button} view="secondary" iconLeft={IconEdit} />
+          </Link>
+
+          <Link to="/posts/story">
+            <Button label="Создание истории" className={styles.header__button} view="secondary" iconLeft={IconPhoto} />
           </Link>
         </Layout>
 
@@ -40,6 +45,10 @@ export const HeaderPage = () => {
 
           <Link to="/posts/generation">
             <Button label="Генерация" className={styles.header__button} view="secondary" iconLeft={IconEdit} onlyIcon />
+          </Link>
+
+          <Link to="/posts/story">
+            <Button label="Истории" className={styles.header__button} view="secondary" iconLeft={IconPhoto} onlyIcon />
           </Link>
         </Layout>
       </Layout>

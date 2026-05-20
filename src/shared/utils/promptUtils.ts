@@ -17,6 +17,13 @@ export const getPromptFromArticle = (promptType: PromptType, title: string, arti
     : prompt;
 };
 
+export const getSummaryPrompt = (title: string, article: string): string => {
+  const raw = `${BASE_PROMPTS.summary}${title}. Текст статьи: ${article}`;
+  return raw.length > MAX_PROMPT_LENGTH.summary
+    ? raw.substring(0, MAX_PROMPT_LENGTH.summary - 3) + '...'
+    : raw;
+};
+
 export const getSafePrompt = (promptType: PromptType, userPrompt: string, additionalStyle?: StyleType) => {
   let prompt = userPrompt;
 

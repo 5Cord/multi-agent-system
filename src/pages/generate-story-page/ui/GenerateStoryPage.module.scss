@@ -1,0 +1,177 @@
+.wrapper {
+  gap: 20px;
+}
+
+.title {
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  margin-top: -12px;
+}
+
+.articleBadge {
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(0, 118, 235, 0.07);
+  border: 1px solid rgba(0, 118, 235, 0.25);
+  border-radius: 8px;
+
+  &__clear {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-typo-secondary);
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+}
+
+.settings {
+  gap: 16px;
+}
+
+.promptRow {
+  gap: 16px;
+}
+
+.actions {
+  gap: 12px;
+}
+
+.button {
+  width: 240px;
+}
+
+.result {
+  gap: 32px;
+  align-items: flex-start;
+
+  @media (max-width: 960px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+// ── Панель оформления ──────────────────────────────────────────
+
+.panel {
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-bg-border, #e0e0e0);
+  border-radius: 12px;
+  background: var(--color-bg-secondary, #f8f8f8);
+
+  &__title {
+    margin-bottom: 0;
+  }
+}
+
+.control {
+  gap: 8px;
+
+  &__header {
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+// ── Плашка ─────────────────────────────────────────────────────
+
+.plateControls {
+  gap: 10px;
+  padding-left: 4px;
+}
+
+.colorPicker {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.colorSwatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  outline: none;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &_active {
+    border-color: var(--color-bg-brand, #0076eb);
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px #fff inset;
+  }
+}
+
+// ── Подсказка ──────────────────────────────────────────────────
+
+.hint {
+  padding: 10px 14px;
+  background: rgba(0, 118, 235, 0.05);
+  border-left: 3px solid var(--color-bg-brand, #0076eb);
+  border-radius: 4px;
+}
+
+.exportButton {
+  width: 100%;
+  max-width: 405px;
+}
+
+// ── Рейтинг ────────────────────────────────────────────────────
+
+.rating {
+  gap: 8px;
+
+  &__stars {
+    gap: 4px;
+  }
+
+  &__star {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 36px;
+    color: var(--color-control-bg-border-default, #c0bfbf);
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s ease, transform 0.1s ease;
+
+    &:hover,
+    &_active {
+      color: #f5a623;
+    }
+
+    &:hover {
+      transform: scale(1.15);
+    }
+
+    &:disabled {
+      cursor: default;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+}

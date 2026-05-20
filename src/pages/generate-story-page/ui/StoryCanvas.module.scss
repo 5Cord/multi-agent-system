@@ -1,0 +1,253 @@
+.canvas {
+  position: relative;
+  width: 405px;
+  height: 720px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #1a1a2e;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  user-select: none;
+}
+
+.canvas__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.canvas__overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 15px;
+  text-align: center;
+  padding: 24px;
+}
+
+// ── Хэндл «Переместить все» ─────────────────────────────────────
+
+.groupDragHandle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  cursor: grab;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 20px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 20;
+  transition: background 0.15s;
+
+  &:active {
+    cursor: grabbing;
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// ── Тезис ───────────────────────────────────────────────────────
+
+.thesis {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 280px;
+
+  &__dragHandle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    cursor: grab;
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 4px;
+    margin-top: 2px;
+    transition: background 0.15s;
+
+    &:active {
+      cursor: grabbing;
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+    }
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  &__inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    transition: filter 0.15s;
+
+    &:hover {
+      filter: brightness(1.08);
+    }
+  }
+
+  &__bullet {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f5a623;
+    margin-top: 9px;
+    transition: background 0.2s;
+  }
+
+  &__text {
+    color: #ffffff;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 500;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+    flex: 1;
+    margin: 0;
+    word-break: break-word;
+  }
+
+  &__textarea {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 500;
+    padding: 4px 8px;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    min-width: 0;
+
+    &:focus {
+      border-color: #f5a623;
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &__remove {
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    align-self: flex-start;
+    margin-top: 2px;
+
+    &:hover {
+      color: #ff6b6b;
+      background: rgba(200, 50, 50, 0.3);
+    }
+  }
+}
+
+// ── Водяной знак ────────────────────────────────────────────────
+
+.watermark {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    font-size: 10px;
+    color: rgba(200, 200, 200, 0.384);
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    user-select: none;
+    white-space: nowrap;
+  z-index: 4;
+}
+
+// ── Добавить тезис ──────────────────────────────────────────────
+
+.addThesis {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  z-index: 5;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.6);
+    color: #fff;
+  }
+}
+
+@media (max-width: 768px) {
+  .canvas {
+    width: 340px;
+    height: 604px;
+  }
+
+  .thesis {
+    max-width: 230px;
+  }
+}
+
+@media (max-width: 480px) {
+  .canvas {
+    width: 300px;
+    height: 533px;
+  }
+
+  .thesis {
+    max-width: 200px;
+  }
+}

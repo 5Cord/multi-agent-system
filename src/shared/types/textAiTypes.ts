@@ -1,7 +1,7 @@
 export type IOpenRouterModel =
-  | 'meta-llama/llama-3.3-8b-instruct:free'
-  | 'google/gemma-3n-e4b-it:free'
-  | 'deepseek/deepseek-prover-v2:free';
+  | 'qwen/qwen3-235b-a22b:free'
+  | 'meta-llama/llama-3.3-70b-instruct:free'
+  | 'google/gemma-3-27b-it:free';
 
 export interface IOpenRouterMessage {
   role: 'user' | 'assistant' | 'system';

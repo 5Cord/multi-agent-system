@@ -10,7 +10,7 @@ export const getImageByStyleId = (style: StyleType) => {
   if (style === 'KANDINSKY') return abstractImage;
   if (style === 'ANIME') return animeImage;
   if (style === 'DEFAULT') return defaultImage;
-  if (style === 'UHD') return detailedImage;
+  if (style === 'REALISTIC') return detailedImage;
 
   return defaultImage;
 };

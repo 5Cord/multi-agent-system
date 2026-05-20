@@ -4,6 +4,19 @@
 
 .list {
   gap: 32px;
+
+  &__header {
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__scrape {
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
 }
 
 .grid {
