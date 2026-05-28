@@ -17,6 +17,11 @@ const BASE_NEGATIVE_PROMPT =
   'arrows, numbers, digits, labels, captions, watermark, logo, symbols, ' +
   'data visualization, table, statistics, annotations';
 
+// Явный запрет прямо в позитивном промпте — FLUX и другие диффузионные модели
+// слушаются его надёжнее, чем negative_prompt
+const NO_TEXT_SUFFIX =
+  ', no text, no letters, no words, no numbers, no digits, no logos, no watermarks, no signs, no billboards, no banners, no price tags, no labels, no captions, no graphs, no charts, no statistics, no infographics, no newspapers, no documents, no graffiti, no typography';
+
 async function callOpenRouter(systemPrompt: string, userContent: string): Promise<string | null> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return null;
@@ -69,14 +74,17 @@ Rules:
 - The prompt MUST start with the style keywords: "${styleModifier}"
 - Be specific about Russian urban architecture and environment from the article
 - Include season/weather/time of day if it adds realism
-- NO text, NO logos, NO people unless the article specifically focuses on residents${negativeInstruction}
+- ABSOLUTELY NO text of any kind: no letters, no words, no numbers, no digits, no signs, no billboards, no storefronts with writing, no price tags, no banners with text, no newspapers, no documents, no screens showing content, no graffiti, no labels, no captions, no logos, no watermarks, no graphs, no charts, no statistics, no infographics, no tables${negativeInstruction}
+- NEVER describe scenes that naturally contain text: no advertising boards, no shop windows with writing, no news stands, no price displays, no street signs with text
+- The prompt MUST end with exactly this phrase: "no text, no letters, no numbers, no logos, no signs, no watermarks"
 - Output ONLY the prompt, no explanations, max 200 words`,
     articlePrompt
   );
 
   if (result) {
-    console.log('[Generate] AI-промпт:', result.slice(0, 120) + '...');
-    return result;
+    const withSuffix = result.trimEnd() + NO_TEXT_SUFFIX;
+    console.log('[Generate] AI-промпт:', withSuffix.slice(0, 120) + '...');
+    return withSuffix;
   }
 
   // Fallback: берём заголовок и переводим
@@ -86,7 +94,7 @@ Rules:
     'Translate to English. Return ONLY the translation.',
     title
   );
-  return `${styleModifier}, Saint Petersburg Russia real estate: ${translated ?? title}, high detail`;
+  return `${styleModifier}, Saint Petersburg Russia real estate: ${translated ?? title}, high detail${NO_TEXT_SUFFIX}`;
 }
 
 async function translateToEnglish(text: string): Promise<string> {
@@ -111,7 +119,7 @@ async function generateImageWithFallback(
   const gigachatKey = process.env.GIGACHAT_API_KEY;
   if (gigachatKey) {
     try {
-      const gigaPrompt = `${russianPrompt}. Не добавляй на изображение текст, цифры, стрелки, инфографику, диаграммы и любые символы.`;
+      const gigaPrompt = `${russianPrompt}. Только визуальная сцена, никакого текста, букв, цифр, чисел, логотипов, стрелок, инфографики, диаграмм, графиков, таблиц, статистики и любых символов или надписей.`;
       const base64 = await new GigaChatService(gigachatKey).generateImage(gigaPrompt);
       return { base64, provider: 'GigaChat' };
     } catch (err) {

@@ -122,7 +122,7 @@ export const GenerateStoryPage = () => {
   const getEffectiveImagePrompt = () => {
     if (imagePrompt?.trim()) return imagePrompt.trim();
     if (topic?.trim())
-      return `Недвижимость, риелтор: ${topic.trim()}. Профессиональное фото, современный интерьер или городской пейзаж.`;
+      return `Недвижимость, риелтор: ${topic.trim()}. Профессиональное фото, современный интерьер или городской пейзаж. Без текста, цифр, графиков, диаграмм, статистики, инфографики и надписей.`;
     return null;
   };
 
@@ -144,7 +144,11 @@ export const GenerateStoryPage = () => {
       : THESES_PROMPT(topic.trim());
 
     const [imageResult, thesesResult] = await Promise.allSettled([
-      backendService.generateImage(effectiveImagePrompt, null, imageStyle?.id),
+      backendService.generateImage(
+        effectiveImagePrompt,
+        'текст, буквы, надписи, цифры, числа, логотипы, знаки, графики, диаграммы, таблицы, статистика, инфографика, подписи, символы, водяные знаки',
+        imageStyle?.id,
+      ),
       backendService.generateText(thesesPrompt),
     ]);
 
