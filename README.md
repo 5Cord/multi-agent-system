@@ -70,15 +70,20 @@
 
 1. Главная страница
 
-<img width="1918" height="953" alt="posts-list" src="https://github.com/user-attachments/assets/39859b60-2777-43cd-a073-6dd31d591c6f" />
+<img width="1857" height="1970" alt="image" src="https://github.com/user-attachments/assets/1e75d950-fa7a-4c19-a03c-c2db0ff42b7c" />
 
 2. Страница отдельной новости
 
-<img width="1920" height="946" alt="single-post" src="https://github.com/user-attachments/assets/263f99dd-4582-412d-b6b3-c72507015cd1" />
+<img width="1868" height="957" alt="image" src="https://github.com/user-attachments/assets/e8f23c40-4801-43c5-ae61-be9c8486b382" />
 
 3. Страница генерации поста для социальной сети
 
-<img width="1916" height="981" alt="generated-post" src="https://github.com/user-attachments/assets/4adedf8a-aac1-4722-a4b6-27fc07087f88" />
+<img width="1872" height="960" alt="image" src="https://github.com/user-attachments/assets/2b73de74-c520-4e6f-a0bc-c605c8d78495" />
+
+4. Страница генерации истории для социальной сети
+
+<img width="1857" height="1248" alt="image" src="https://github.com/user-attachments/assets/2717ec28-3403-465a-9d2e-b9d2eb6b3658" />
+
 
 ### Команда проекта
 
